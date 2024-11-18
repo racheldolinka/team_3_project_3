@@ -1,2 +1,99 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+from enum import Enum
+from abc import ABC, abstractmethod
+from typing import List, Dict
+
+# Availability Enum to define the caregiver's shift availability
+class Availability(Enum):
+    PREFERRED = "preferred"
+    AVAILABLE = "available"
+    UNAVAILABLE = "unavailable"
+
+# Abstract class Caregiver to define common attributes and methods
+class Caregiver(ABC):
+    def __init__(self, name: str, phone: str, email: str, pay_rate: float):
+        self.name = name
+        self.phone = phone
+        self.email = email
+        self.pay_rate = pay_rate
+        self.schedule = {}  # To store the availability for each shift (AM, PM)
+
+    @abstractmethod
+    def calculate_payment(self):
+        pass  # Each subclass will define how payment is calculated
+
+    def set_availability(self, shift: str, availability: Availability):
+        self.schedule[shift] = availability
+
+    def get_availability(self, shift: str) -> Availability:
+        return self.schedule.get(shift, Availability.UNAVAILABLE)
+
+    def __str__(self):
+        return f"{self.name} | {self.phone} | {self.email} | Pay Rate: ${self.pay_rate}/hr"
+
+# Subclass for Paid Caregivers
+class PaidCaregiver(Caregiver):
+    def __init__(self, name: str, phone: str, email: str, pay_rate: float, hourly_rate: float):
+        super().__init__(name, phone, email, hourly_rate)
+        self.hourly_rate = hourly_rate  # Pay rate for paid caregivers
+
+    def calculate_payment(self, hours_worked: float) -> float:
+        return self.hourly_rate * hours_worked  # Payment based on hourly rate
+
+# Subclass for Family Caregivers
+class FamilyCaregiver(Caregiver):
+    def __init__(self, name: str, phone: str, email: str, hours: float):
+        super().__init__(name, phone, email, 0)  # Family caregivers are not paid by hourly rate
+        self.hours = hours  # This could be a fixed number of hours for family caregivers
+
+    def calculate_payment(self, hours_worked: float) -> float:
+        return 0  # Family caregivers don't receive payment, or you could modify if there's a stipend
+
+# Class to handle scheduling of shifts
+class CaregiverSchedule:
+    def __init__(self):
+        self.schedule = {}  # Dictionary to store caregivers for each shift
+
+    def add_caregiver_to_shift(self, caregiver: Caregiver, shift: str):
+        if shift not in self.schedule:
+            self.schedule[shift] = []
+        # Check if caregiver is available
+        if caregiver.get_availability(shift) != Availability.UNAVAILABLE:
+            self.schedule[shift].append(caregiver)
+        else:
+            print(f"{caregiver.name} is unavailable for the {shift} shift.")
+
+    def show_schedule(self):
+        for shift, caregivers in self.schedule.items():
+            print(f"Shift: {shift}")
+            for caregiver in caregivers:
+                print(f"- {caregiver.name} ({caregiver.get_availability(shift).value})")
+
+# Main Application to manage caregivers
+def main():
+    # Create caregivers
+    caregiver1 = PaidCaregiver("John Doe", "555-1234", "john@example.com", 15.00)
+    caregiver2 = FamilyCaregiver("Jane Smith", "555-5678", "jane@example.com", 12)
+
+    # Set availability for caregivers
+    caregiver1.set_availability("AM", Availability.PREFERRED)
+    caregiver1.set_availability("PM", Availability.AVAILABLE)
+    
+    caregiver2.set_availability("AM", Availability.UNAVAILABLE)
+    caregiver2.set_availability("PM", Availability.PREFERRED)
+
+    # Create the schedule manager
+    schedule_manager = CaregiverSchedule()
+
+    # Add caregivers to shifts
+    schedule_manager.add_caregiver_to_shift(caregiver1, "AM")
+    schedule_manager.add_caregiver_to_shift(caregiver2, "PM")
+
+    # Show the schedule
+    schedule_manager.show_schedule()
+
+    # Calculate payments for caregivers (just an example of payment calculation)
+    print(f"Payment for {caregiver1.name}: ${caregiver1.calculate_payment(6)}")
+    print(f"Payment for {caregiver2.name}: ${caregiver2.calculate_payment(6)}")
+
+if __name__ == "__main__":
+    main()
