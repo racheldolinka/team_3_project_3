@@ -18,7 +18,7 @@ class Caregiver(ABC):
         self.schedule = {}  # To store the availability for each shift (AM, PM)
 
     @abstractmethod
-    def calculate_payment(self):
+    def calculate_payment(self, hours_worked: float) -> float:
         pass  # Each subclass will define how payment is calculated
 
     def set_availability(self, shift: str, availability: Availability):
@@ -32,12 +32,11 @@ class Caregiver(ABC):
 
 # Subclass for Paid Caregivers
 class PaidCaregiver(Caregiver):
-    def __init__(self, name: str, phone: str, email: str, pay_rate: float, hourly_rate: float):
-        super().__init__(name, phone, email, hourly_rate)
-        self.hourly_rate = hourly_rate  # Pay rate for paid caregivers
+    def __init__(self, name: str, phone: str, email: str, pay_rate: float):
+        super().__init__(name, phone, email, pay_rate)  # Only pass pay_rate here
 
     def calculate_payment(self, hours_worked: float) -> float:
-        return self.hourly_rate * hours_worked  # Payment based on hourly rate
+        return self.pay_rate * hours_worked  # Payment based on hourly rate
 
 # Subclass for Family Caregivers
 class FamilyCaregiver(Caregiver):
